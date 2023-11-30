@@ -106,18 +106,72 @@ public class Model extends Observable {
      *    value, then the leading two tiles in the direction of motion merge,
      *    and the trailing tile does not.
      * */
+    /*判断这个元素同一列上面是否全为null*/
+    public boolean colnull(int i,int j) {
+        for (int k = board.size() - 1; k >j; k--) {
+            if (board.tile(i, k) != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+    /*
+    判断这个元素同一列上面最近的非null的位置
+     */
+    public int notnullposition(int i,int j){
+        for (int k=j+1;k<board.size();k++){
+            if (board.tile(i, k)!=null){
+                return k;
+            }
+        }
+        return -1;
+
+    }
+
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
-
+        board.setViewingPerspective(side);
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        int size= board.size();
+        int[][] x=new int[size][size];
+        for (int i = 0;i< size;i++) {
+            for (int j = 0; j < size; j++) {
+                x[i][j] = 0;
+            }
+        }
+        for (int i = 0;i< size;i++) {
+            for (int j = size - 2; j >= 0; j--) {
+                Tile t= board.tile(i,j);
+                if (t!=null){
+                    if (colnull(i,j)){
+                        board.move(i,size-1,t);
 
+                    }
+                    else {
+                        int p=notnullposition(i,j);
+                        Tile notnull=board.tile(i,p);
+                        if (t.value()==notnull.value()&&x[i][p]==0){
+                                board.move(i,p,t);
+                                x[i][p]=1;
+                                score +=2*t.value();
+                        }
+                        else {
+                            board.move(i,p-1,t);
+                        }
+                    }
+                    changed = true;
+                }
+            }
+        }
         checkGameOver();
+
         if (changed) {
             setChanged();
         }
+        board.setViewingPerspective(Side.NORTH);
         return changed;
     }
 
@@ -138,6 +192,13 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for (int i = 0;i< b.size();i++){
+            for (int j=0;j<b.size();j++){
+                if(b.tile(i,j)==null){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +209,15 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        for (int i = 0;i< b.size();i++){
+            for (int j=0;j<b.size();j++){
+                if( b.tile(i,j)!= null){
+                    if(b.tile(i,j).value()==MAX_PIECE) {
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
@@ -159,6 +229,22 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        for (int i = 0;i< b.size();i++){
+            for (int j=0;j<b.size();j++){
+                if( b.tile(i,j)== null){
+                        return true;
+                    }
+                else if ( i<b.size()-1&&b.tile(i+1,j)== null ||j<b.size()-1&&b.tile(i,j+1)== null ){
+                    return true;
+                }
+                else if(i<b.size()-1&&b.tile(i,j).value()==b.tile(i+1,j).value() ) {
+                    return true;
+                }
+                else if (j<b.size()-1&&b.tile(i,j).value()==b.tile(i,j+1).value()){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
