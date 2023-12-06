@@ -16,5 +16,10 @@ public class SquarePrimesTest {
         boolean changed = IntListExercises.squarePrimes(lst);
         assertEquals("14 -> 15 -> 16 -> 289 -> 18", lst.toString());
         assertTrue(changed);
+
+        IntList lst1 = IntList.of(14, 17, 16, 17, 18);
+        boolean changed1 = IntListExercises.squarePrimes(lst1);
+        assertEquals("14 -> 289 -> 16 -> 289 -> 18", lst1.toString());
+        assertTrue(changed1);
     }
 }
