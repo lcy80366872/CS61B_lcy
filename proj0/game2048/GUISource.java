@@ -43,7 +43,7 @@ class GUISource implements InputSource {
                 break;
             case "S" :
                 command = "Down";
-                break;w
+                break;
             case "A" :
                 command = "Left";
                 break;
