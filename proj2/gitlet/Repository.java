@@ -160,9 +160,14 @@ public class Repository {
         //获取当前stage内信息
         add_stage=readStage(join(STAGE_DIR,"add"));
         remove_stage=readStage(join(STAGE_DIR,"remove"));
+
         //将stage内的信息复制出来
         Map<String,String>add_blob_map= copy_blobmap(add_stage);
         Map<String,String>remove_blob_map= copy_blobmap(remove_stage);
+        if (add_blob_map.isEmpty() && remove_blob_map.isEmpty()) {
+            System.out.println("No changes added to the commit.");
+            System.exit(0);
+        }
         //合并到blob——map
         if (!add_blob_map.isEmpty()){
             for (String i : add_blob_map.keySet()) {
