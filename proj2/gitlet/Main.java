@@ -14,11 +14,25 @@ public class Main {
         switch(firstArg) {
             case "init":
                 // TODO: handle the `init` command
+                validArgs(args,1);
+                Repository.init();
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command
+                validArgs(args,2);
+                Repository.add(args[1]);
                 break;
-            // TODO: FILL THE REST IN
+            case "commit":
+                // TODO: handle the `add [filename]` command
+                validArgs(args,2);
+                Repository.commit(args[1]);
+                break;
+        }
+    }
+    private static void validArgs(String[] args, int num) {
+        if (args.length != num) {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
         }
     }
 }
