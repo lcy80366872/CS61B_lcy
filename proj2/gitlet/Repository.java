@@ -378,21 +378,25 @@ public class Repository {
         if (commit.exist_filepath(file_path)){
             Blob file_blob = commit.getblob_byfilepath(file_path);
             byte[] context = file_blob.getContext();
-            writeObject(file,new String(context, StandardCharsets.UTF_8));
+            writeContents(file,new String(context, StandardCharsets.UTF_8));
         }
     }
     //checkout第一种情况
     public static void checkout(String file_name){
         Commit last_commit=getlast_commit();
+        File file= join(CWD,file_name);
+        String file_path=file.getPath();
         //若Commit追踪的文件包含filename
         //则将其写入到工作目录：如果同名文件存在，overwrite它
         // 如果不存在，直接写入。
-        overwrite_file(file_name,last_commit);
+        if (last_commit.exist_filepath(file_path)){
+            Blob file_blob = last_commit.getblob_byfilepath(file_path);
+            byte[] context = file_blob.getContext();
+            writeContents(file,new String(context, StandardCharsets.UTF_8));
+        }
         //若当前的Commit中不存在filename的文件，
         // 输出File does not exist in that commit.
-        File file= join(CWD,file_name);
-        String file_path=file.getPath();
-        if (!last_commit.exist_filepath(file_path)){
+        else {
             System.out.println("File does not exist in that commit.");
             System.exit(0);
         }
@@ -411,7 +415,7 @@ public class Repository {
         if (commit.exist_filepath(file_path)){
             Blob file_blob = commit.getblob_byfilepath(file_path);
             byte[] context = file_blob.getContext();
-            writeObject(file,new String(context, StandardCharsets.UTF_8));
+            writeContents(file,new String(context, StandardCharsets.UTF_8));
         }//若当前的Commit中不存在filename的文件，
         // 输出File does not exist in that commit.
         else {
@@ -449,7 +453,7 @@ public class Repository {
             if (!oriBlobID_list.contains(newID)){
                 Blob newblob= Blob.getblob_byID(newID);
                 byte[] context = newblob.getContext();
-                writeObject(newblob.get_File(),new String(context, StandardCharsets.UTF_8));
+                writeContents(newblob.get_File(),new String(context, StandardCharsets.UTF_8));
             }
         }
         //对于文件集1中没有而文件集2中有的文件，
@@ -630,11 +634,8 @@ public class Repository {
             }
         }
     }
-    private static Map<String,String> merge_file(List<String> AllFile, Commit split_point,Commit currCommit,Commit mergeCommit){
-        //得到每个相关节点指向的文件map(path->blobID)
-        Map<String,String> split_blobs = split_point.getblobID_map();
-        Map<String,String>curr_blobs = currCommit.getblobID_map();
-        Map<String,String> merge_blobs = mergeCommit.getblobID_map();
+    private static Map<String,String> merge_file(List<String> AllFile, Map<String,String> split_blobs,Map<String,String>curr_blobs,Map<String,String> merge_blobs){
+        //上面后三个参数是每个相关节点指向的文件map(path->blobID)
         //case5
         List<String> add_blobsID= add_file_list(split_blobs,curr_blobs,merge_blobs);
         //case1
@@ -643,8 +644,7 @@ public class Repository {
         List<String> delete_blobsID= delete_file_list(split_blobs,curr_blobs,merge_blobs);
         //根据当前的commit的blobmap，对其进行修改，得出融合后的map
         Map<String,String>map= merge_file_map(add_blobsID,overwrite_blobsID,delete_blobsID,currCommit);
-        //case3-2
-        deal_conflict(split_blobs,curr_blobs,merge_blobs);
+
         //case 2 4 7 3-1: do nothing
 
         //返回map
@@ -710,7 +710,10 @@ public class Repository {
         AllBlob.clear();
         AllBlob.addAll(set);
         //根据7种merge情况筛选需要增加、删除、保留的文件
-        Map<String,String> map= merge_file(AllBlob,split_commit,currCommit,mergeCommit);
+        Map<String,String> split_blobs = split_commit.getblobID_map();
+        Map<String,String>curr_blobs = currCommit.getblobID_map();
+        Map<String,String> merge_blobs = mergeCommit.getblobID_map();
+        Map<String,String> map= merge_file(AllBlob,split_blobs,curr_blobs,merge_blobs);
         //message
         String curr_branch = readContentsAsString(HEAD_FILE);
         String message = "Merged "+ branch+ "into "+ curr_branch+".";
@@ -721,6 +724,8 @@ public class Repository {
         Commit newCommit =new Commit(message,map,parents);
         //变更工作区文件
         reset(newCommit.getID());
+        //case3-2,在这里才进行是为了防止误删
+        deal_conflict(split_blobs,curr_blobs,merge_blobs);
         //保存新commit
         saveHeads(newCommit);
 
