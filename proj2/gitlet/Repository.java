@@ -233,9 +233,9 @@ public class Repository {
             add_stage.delete(file_path);
             add_stage.add_save();
         }
-        //若该文件被当前指向commit跟踪，（即当前committree里有这个文件）将它放在remove——stage并且删除工作区该文件
+        //若该文件被当前指向commit跟踪，（即当前commit_tree里有这个文件）将它放在remove——stage并且删除工作区该文件
         //若文件不存在于工作目录中，不删除即可
-        //放到remove缓冲区后，下一次committree就不会有该文件了
+        //放到remove缓冲区后，下一次commit_tree就不会有该文件了
         else if (currcommit.exist_filepath(file_path)){
             remove_stage.add(currcommit.getblob_byfilepath(file_path));
             remove_stage.remove_save();
@@ -401,16 +401,16 @@ public class Repository {
             System.exit(0);
         }
     }
-
     //checkout 第二种情况
     //与第一种情况类似，只不过现在是从之前的某个Commit追踪的文件中
     // 把filename的文件拉过来
     public static void checkout(String commitID,String file_name){
-        Commit commit=getCommitByID(commitID);
-        if (commit == null) {
+        List<String> blob_list = plainFilenamesIn(OBJECT_DIR);
+        if (!blob_list.contains(commitID) ) {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
+        Commit commit=getCommitByID(commitID);
         File file= join(CWD,file_name);
         String file_path=file.getPath();
         if (commit.exist_filepath(file_path)){
@@ -480,6 +480,11 @@ public class Repository {
         clear_stage();
     }
     public static void branch(String branch){
+        List <String> branch_list = plainFilenamesIn(heads_DIR);
+        if (branch_list.contains(branch)){
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
         File new_branch = join(heads_DIR,branch);
         writeContents(new_branch,getlast_commit().getID());
     }
@@ -503,9 +508,9 @@ public class Repository {
             String curr_branch = readContentsAsString(HEAD_FILE);
             File currcommit_file = join(heads_DIR, curr_branch);
             //获得新旧commit
-            Commit commit=Commit.getCommitByID(commit_id);
+            Commit commit= getCommitByID(commit_id);
             String OldCommitID= readContentsAsString(currcommit_file);
-            Commit OldCommit =  Commit.getCommitByID(OldCommitID);
+            Commit OldCommit =  getCommitByID(OldCommitID);
             //将当前指向的commit换成我们所需的commit_id的那个commit
             writeContents(currcommit_file, commit_id);
             //获得变换commit后，当前工作目录需要有哪些文件
@@ -695,7 +700,7 @@ public class Repository {
         checkIfMergeWithSelf(branch);
         //读取当前commit和要merged_branch的最后commit
         currCommit = getlast_commit();
-        String merge_id = readContentsAsString(heads_DIR);
+        String merge_id = readContentsAsString(join(heads_DIR,branch));
         Commit mergeCommit= getCommitByID(merge_id) ;
         //将两个branch途径的所有commitID和对应的深度，放入两个map里，便于后续操作
         Map<String,Integer> currMap= getMap_fromCommit(currCommit,0);
