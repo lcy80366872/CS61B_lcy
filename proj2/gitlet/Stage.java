@@ -3,6 +3,7 @@ import static gitlet.Repository.STAGE_DIR;
 import static gitlet.Utils.*;
 
 import java.io.File;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +32,9 @@ public class Stage implements Serializable {
     public void delete(Blob blob) {
         tree.remove(blob.get_path());
     }
+    public void delete(String file_name) {
+        tree.remove(file_name);
+    }
     public void add_save(){
         File add_stage = join(STAGE_DIR,"add");
         writeObject(add_stage,this);
@@ -44,6 +48,9 @@ public class Stage implements Serializable {
         System.out.println(tree.values());
         return list;
     }
+    public boolean isEmpty(){
+        return tree.isEmpty();
+    }
     public List<Blob> blob_list(){
         Blob blob;
         List<Blob> list=new ArrayList<>();
@@ -52,6 +59,9 @@ public class Stage implements Serializable {
             list.add(blob);
         }
         return list;
+    }
+    public void clear() {
+        tree.clear();
     }
 
 }

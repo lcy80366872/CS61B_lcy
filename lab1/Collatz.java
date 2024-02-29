@@ -22,7 +22,12 @@ public class Collatz {
             n = nextNumber(n);
             System.out.print(n + " ");
         }
-        System.out.println();
+        System.out.printlgit logn();
     }
+
+
+
+
+
 }
 

@@ -2,6 +2,7 @@ package gitlet;
 
 // TODO: any imports you need here
 import java.io.File;
+import java.io.Serial;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -49,7 +50,8 @@ public class Commit implements Serializable {
         this.message=message;
         this.blobID=blobID;
         this.parents=parents;
-        this.currentTime=new Date(0);
+        //这个时间是当前时间
+        this.currentTime=new Date();
         this.timeStamp=dateToTimeStamp(this.currentTime);
         this.id=general_id();
         this.filepath=join(OBJECT_DIR,id);
@@ -58,6 +60,7 @@ public class Commit implements Serializable {
         this.message="initial commit";
         this.blobID=new HashMap<>();
         this.parents=new ArrayList<>();
+        //这个时间是默认初始时间
         this.currentTime=new Date(0);
         this.timeStamp=dateToTimeStamp(this.currentTime);
         this.id=general_id();
@@ -66,11 +69,34 @@ public class Commit implements Serializable {
     public String getID(){
         return this.id;
     }
+    public String getTime(){
+        return this.timeStamp;
+    }
+    public String getMessage(){
+        return this.message;
+    }
+    public List<String> getParents(){
+        return this.parents;
+    }
+    public Blob getblob_byfilepath(String file_path){
+        String id =blobID.get(file_path);
+        return Blob.getblob_byID(id);
+    }
+    public void remove(Blob blob){
+        blobID.remove(blob.get_path(),blob.getID());
+    }
     public void add(Blob blob){
         blobID.put(blob.get_path(),blob.getID());
     }
     public Map<String,String> getblobID_map(){
         return this.blobID;
+    }
+    public boolean exist_filepath(String file_path){
+        return blobID.containsKey(file_path);
+    }
+    public static Commit getCommitByID(String id){
+        File commit =join(OBJECT_DIR,id);
+        return readObject(commit,Commit.class);
     }
     public void save(){
         writeObject(filepath,this);

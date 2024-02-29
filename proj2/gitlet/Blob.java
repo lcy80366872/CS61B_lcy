@@ -1,6 +1,7 @@
 package gitlet;
 import static gitlet.Repository.*;
 import java.io.File;
+import java.io.Serial;
 import java.io.Serializable;
 import static gitlet.Utils.*;
 public class Blob implements Serializable {
@@ -22,12 +23,19 @@ public class Blob implements Serializable {
     public String get_path(){
         return this.path;
     }
+    public String get_filename(){
+        return this.file_name.getName();
+    }
     public static Blob  getblob_byID(String id){
         File Blob_file=  join(OBJECT_DIR,id);
         return readObject(Blob_file,Blob.class);
     }
+    public File get_File(){return file_name;}
     public String getID(){
         return id;
+    }
+    public byte[] getContext(){
+        return context;
     }
     public void save(){
         File blob_path= join(OBJECT_DIR,id);

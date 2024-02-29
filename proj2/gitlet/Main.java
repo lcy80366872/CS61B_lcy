@@ -23,9 +23,71 @@ public class Main {
                 Repository.add(args[1]);
                 break;
             case "commit":
-                // TODO: handle the `add [filename]` command
                 validArgs(args,2);
                 Repository.commit(args[1]);
+                break;
+            case "rm":
+                validArgs(args,2);
+                Repository.rm(args[1]);
+                break;
+            case "log":
+                validArgs(args,1);
+                Repository.log();
+                break;
+            case "global-log":
+                validArgs(args,1);
+                Repository.global_log();
+                break;
+            case "find":
+                validArgs(args,2);
+                Repository.find(args[1]);
+                break;
+            case "status":
+                validArgs(args,1);
+                Repository.status();
+                break;
+            case "checkout":
+                switch (args.length){
+                    case 2:
+                        /* * checkout [branch name] */
+                        Repository.checkout_branch(args[1]);
+                        break;
+                    case 3:
+                        /* * checkout -- [file name] */
+                        if (!args[1].equals("--")){
+                            System.out.println("Incorrect operands.");
+                            System.exit(0);
+                        }
+                        Repository.checkout(args[2]);
+                        break;
+                    case 4:
+                        /* * checkout [commit id] -- [file name] */
+                        if (!args[2].equals("--")){
+                            System.out.println("Incorrect operands.");
+                            System.exit(0);
+                        }
+                        Repository.checkout(args[1],args[3]);
+                        break;
+                    default:
+                        System.out.println("Incorrect operands.");
+                        System.exit(0);
+                }
+                break;
+            case "branch":
+                validArgs(args,2);
+                Repository.branch(args[1]);
+                break;
+            case "rm-branch":
+                validArgs(args,2);
+                Repository.rm_branch(args[1]);
+                break;
+            case "reset":
+                validArgs(args,2);
+                Repository.reset(args[1]);
+                break;
+            case "merge":
+                validArgs(args,2);
+                Repository.merge(args[1]);
                 break;
         }
     }
