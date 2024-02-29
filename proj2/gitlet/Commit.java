@@ -94,7 +94,7 @@ public class Commit implements Serializable {
     public boolean exist_filepath(String file_path){
         return blobID.containsKey(file_path);
     }
-    public Commit getCommitByID(String id){
+    public static Commit getCommitByID(String id){
         File commit =join(OBJECT_DIR,id);
         return readObject(commit,Commit.class);
     }
