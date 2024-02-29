@@ -419,6 +419,21 @@ public class Repository {
             System.exit(0);
         }
     }
+    private static List<String> get_blob_name(List<String> BlobID_list) {
+        List<String> name_list = new ArrayList<>();
+        for (String i:BlobID_list){
+            Blob blob = Blob.getblob_byID(i);
+            name_list.add(blob.get_filename());
+        }
+        return name_list;
+    }
+    private static List<String> get_blobName(List<Blob> Blob_list) {
+        List<String> name_list = new ArrayList<>();
+        for (Blob i:Blob_list){
+            name_list.add(i.get_filename());
+        }
+        return name_list;
+    }
 
     //checkout第三种情况
     //切换Branch
@@ -446,21 +461,29 @@ public class Repository {
         List<String> oriBlobID_list=ori_commit.blobid_list();
         List<String> newBlobID_list=new_commit.blobid_list();
         for (String newID : newBlobID_list){
-            //原来没有，切换后有了的文件，或者该文件现在内容相比原先变化了
-            // 直接写入或overwrite即可
-            //用blob判断就行(我这里blob包含了文件的内容和路径信息），
+            Blob newblob = Blob.getblob_byID(newID);
+            List<String> name_list =get_blob_name(oriBlobID_list);
+
+
             if (!oriBlobID_list.contains(newID)){
-                Blob newblob= Blob.getblob_byID(newID);
-                byte[] context = newblob.getContext();
-                //这里存在特殊情况
-                //将要直接写入的时候如果有同名文件已经在工作目录中了，说明工作目录中在执行checkout前增加了新的文件而没有commit
-                if(plainFilenamesIn(CWD).contains(newblob.get_filename())) {
-                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
-                    System.exit(0);
-                }
-                else {
+                // 该文件现在内容相比原先变化了，则overwrite，
+                if (!name_list.contains(newblob.get_filename())){
+                    byte[] context = newblob.getContext();
                     writeContents(newblob.get_File(), new String(context, StandardCharsets.UTF_8));
                 }
+                else {
+                    //这里存在特殊情况
+                    //将要直接写入的时候如果有同名文件已经在工作目录中了，说明工作目录中在执行checkout前增加了新的文件而没有commit
+                    if(plainFilenamesIn(CWD).contains(newblob.get_filename())) {
+                        System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                        System.exit(0);
+                    }//原来没有，切换后有了的文件，且不是特殊情况的，直接写入
+                    else {
+                        byte[] context = newblob.getContext();
+                        writeContents(newblob.get_File(), new String(context, StandardCharsets.UTF_8));
+                    }
+                }
+
             }
         }
         //对于切换后分支没有，而切换前分支中有的文件，删掉
@@ -501,58 +524,65 @@ public class Repository {
             System.exit(0);
         }
     }
+    private static void change_commit(Commit NewCommit){
+        String curr_branch = readContentsAsString(HEAD_FILE);
+        File currcommit_file = join(heads_DIR, curr_branch);
+        //获得新旧commit
+        String commit_id= NewCommit.getID();
+        String OldCommitID= readContentsAsString(currcommit_file);
+        Commit OldCommit =  getCommitByID(OldCommitID);
+        //将当前指向的commit换成我们所需的commit_id的那个commit
+        writeContents(currcommit_file, commit_id);
+        //获得变换commit后，当前工作目录需要有哪些文件
+        List<Blob> commit_file_list= NewCommit.blob_list();
+        List<Blob> old_commit_file_list= OldCommit.blob_list();
+
+        List<Blob> add_file_list = new ArrayList<>();
+        //当前目录需要变化的文件（包括需要添加和重写的）
+        List<Blob> change_file_list = new ArrayList<>();
+        //当前目录需要删除的文件
+        List<Blob> delete_file_list = new ArrayList<>();
+        for (Blob i : commit_file_list){
+            List<String> name_list =get_blobName(old_commit_file_list);
+            if (!old_commit_file_list.contains(i)){
+                //若之前的commit中没有这些文件，则将其列入待添加文件列表，同时考虑特殊情况
+                if(!name_list.contains(i.get_filename())){
+                    add_file_list.add(i);
+                }
+                else change_file_list.add(i);
+            }
+        }
+        List<String> curr_file_list= plainFilenamesIn(CWD);
+        for (String i :curr_file_list){
+            File file = join(CWD,i);
+            Blob file_blob = new Blob(file) ;
+            if (!commit_file_list.contains(file_blob)){
+                delete_file_list.add(file_blob);
+            }
+        }
+        for (Blob i :add_file_list){
+            //这里存在特殊情况
+            //将要直接写入的时候如果有同名文件已经在工作目录中了，说明工作目录中在执行checkout前增加了新的文件而没有commit
+            if(plainFilenamesIn(CWD).contains(i.get_filename())) {
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
+            checkout(commit_id,i.get_filename());
+        }
+        for (Blob i :change_file_list){
+            checkout(commit_id,i.get_filename());
+        }
+        for (Blob i :delete_file_list){
+            File delete_file = join(CWD,i.get_filename());
+            deleteFile(delete_file);
+        }
+        clear_stage();
+    }
     public static void reset(String commit_id){
         List<String> file_list =plainFilenamesIn(OBJECT_DIR);
         if (file_list.contains(commit_id)) {
-            String curr_branch = readContentsAsString(HEAD_FILE);
-            File currcommit_file = join(heads_DIR, curr_branch);
-            //获得新旧commit
             Commit commit= getCommitByID(commit_id);
-            String OldCommitID= readContentsAsString(currcommit_file);
-            Commit OldCommit =  getCommitByID(OldCommitID);
-            //将当前指向的commit换成我们所需的commit_id的那个commit
-            writeContents(currcommit_file, commit_id);
-            //获得变换commit后，当前工作目录需要有哪些文件
-            List<Blob> commit_file_list= commit.blob_list();
-            List<Blob> old_commit_file_list= OldCommit.blob_list();
-            //当前目录需要变化的文件（包括需要添加和重写的）
-            List<Blob> change_file_list = new ArrayList<>();
-            //当前目录需要删除的文件
-            List<Blob> delete_file_list = new ArrayList<>();
-            for (Blob i : commit_file_list){
-                //若之前的commit中没有这些文件，则将其列入待变化文件列表
-                if (!old_commit_file_list.contains(i)){
-                    change_file_list.add(i);
-                }
-            }
-            List<String> curr_file_list= plainFilenamesIn(CWD);
-            for (String i :curr_file_list){
-                File file = join(CWD,i);
-                Blob file_blob = new Blob(file) ;
-                if (!commit_file_list.contains(file_blob)){
-                    delete_file_list.add(file_blob);
-                }
-            }
-//            for (Blob i : old_commit_file_list){
-//                //若变更后的commit中没有这些文件，则将其列入待删除文件列表
-//                if (!commit_file_list.contains(i)){
-//                    delete_file_list.add(i);
-//                }
-//            }
-            for (Blob i :change_file_list){
-                //这里存在特殊情况
-                //将要直接写入的时候如果有同名文件已经在工作目录中了，说明工作目录中在执行checkout前增加了新的文件而没有commit
-                if(plainFilenamesIn(CWD).contains(i.get_filename())) {
-                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
-                    System.exit(0);
-                }
-                checkout(commit_id,i.get_filename());
-            }
-            for (Blob i :delete_file_list){
-                File delete_file = join(CWD,i.get_filename());
-                deleteFile(delete_file);
-            }
-            clear_stage();
+            change_commit(commit);
         }
         else {
             System.out.println("No commit with that id exists.");
@@ -617,9 +647,9 @@ public class Repository {
     private static List<String> delete_file_list( Map<String,String> split_blobs ,Map<String,String>curr_blobs,Map<String,String> merge_blobs){
         List<String> delete_blobs = new ArrayList<>();
         for (String i: split_blobs.keySet()){
-            //case6:若相较于split处，merge分支新加文件，而curr分支没变化，则添加新文件
+            //case6:若相较于split处，merge分支删除了文件，而curr分支没变化，则添加要删除的文件到列表
             if (!merge_blobs.containsKey(i)&& curr_blobs.containsKey(i)){
-                delete_blobs.add(merge_blobs.get(i));
+                delete_blobs.add(curr_blobs.get(i));
             }
         }
         return delete_blobs;
@@ -658,6 +688,7 @@ public class Repository {
     }
     private static Map<String,String> merge_file(List<String> AllFile, Map<String,String> split_blobs,Map<String,String>curr_blobs,Map<String,String> merge_blobs){
         //上面后三个参数是每个相关节点指向的文件map(path->blobID)
+        currCommit= getlast_commit();
         //case5
         List<String> add_blobsID= add_file_list(split_blobs,curr_blobs,merge_blobs);
         //case1
@@ -739,13 +770,14 @@ public class Repository {
         //message
         String curr_branch = readContentsAsString(HEAD_FILE);
         String message = "Merged "+ branch+ "into "+ curr_branch+".";
-        //创建新commit
+        //创建新commit并保存
         List<String> parents = new ArrayList<>();
         parents.add(currCommit.getID());
         parents.add(mergeCommit.getID());
         Commit newCommit =new Commit(message,map,parents);
+        newCommit.save();
         //变更工作区文件
-        reset(newCommit.getID());
+        change_commit(newCommit);
         //case3-2,在这里才进行是为了防止误删
         deal_conflict(split_blobs,curr_blobs,merge_blobs);
         //保存新commit
@@ -771,7 +803,6 @@ public class Repository {
         if (!delete_blobsID.isEmpty()){
             for (String i: delete_blobsID){
                 Blob blob = Blob.getblob_byID(i);
-                //这里操作和add一样是因为put时候，是对应路径放的，它会把原来那个文件覆盖
                 mergedCommitBlobs.remove(blob.get_path());
             }
         }

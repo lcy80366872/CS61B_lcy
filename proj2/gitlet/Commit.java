@@ -105,6 +105,15 @@ public class Commit implements Serializable {
         List<String> list =new ArrayList<>(blobID.values());
         return list;
     }
+    public List<String> getFileNames() {
+        List<String> fileName = new ArrayList<>();
+        List<Blob> blobList = blob_list();
+        for (Blob b : blobList) {
+            fileName.add(b.get_filename());
+        }
+        return fileName;
+    }
+
     public List<Blob> blob_list(){
         Blob blob;
         List<Blob> list=new ArrayList<>();
