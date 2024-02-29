@@ -401,11 +401,12 @@ public class Repository {
             System.exit(0);
         }
     }
+
     //checkout 第二种情况
     //与第一种情况类似，只不过现在是从之前的某个Commit追踪的文件中
     // 把filename的文件拉过来
     public static void checkout(String commitID,String file_name){
-        Commit commit=Commit.getCommitByID(commitID);
+        Commit commit=getCommitByID(commitID);
         if (commit == null) {
             System.out.println("No commit with that id exists.");
             System.exit(0);
@@ -436,7 +437,7 @@ public class Repository {
         //读取当前branch的commit
         String ori_branch=readContentsAsString(HEAD_FILE);
         String commit_id= readContentsAsString(join(heads_DIR,ori_branch));
-        Commit ori_commit= readObject(join(OBJECT_DIR,commit_id),Commit.class);
+        Commit ori_commit= getCommitByID(commit_id);
         //如果branch就是当前分支
         if (ori_branch.equals(branch)){
             System.out.println("No need to checkout the current branch.");
@@ -444,7 +445,8 @@ public class Repository {
         }
         //切换Branch，并读取新commit
         writeContents(HEAD_FILE,branch);
-        Commit new_commit= readObject(branch_file,Commit.class);
+        String id= readContentsAsString(branch_file);
+        Commit new_commit= getCommitByID(id);
         //把切换后的分支所跟踪的文件移到当前目录
         //切换后分支跟踪的文件统称文件集1，切换前分支跟踪的文件统称文件集2
         List<String> oriBlobID_list=ori_commit.blobid_list();
