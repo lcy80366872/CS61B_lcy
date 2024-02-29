@@ -435,7 +435,8 @@ public class Repository {
         }
         //读取当前branch的commit
         String ori_branch=readContentsAsString(HEAD_FILE);
-        Commit ori_commit= readObject(join(heads_DIR,ori_branch),Commit.class);
+        String commit_id= readContentsAsString(join(heads_DIR,ori_branch));
+        Commit ori_commit= readObject(join(OBJECT_DIR,commit_id),Commit.class);
         //如果branch就是当前分支
         if (ori_branch.equals(branch)){
             System.out.println("No need to checkout the current branch.");
