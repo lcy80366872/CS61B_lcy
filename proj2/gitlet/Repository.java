@@ -554,9 +554,11 @@ public class Repository {
         }
         List<String> curr_file_list= plainFilenamesIn(CWD);
         for (String i :curr_file_list){
-            File file = join(CWD,i);
-            Blob file_blob = new Blob(file) ;
-            if (!commit_file_list.contains(file_blob)){
+            //变换后目录里面应该有的文件名字
+            List<String> new_file_name =get_blobName(commit_file_list);
+            if (!new_file_name.contains(i)){
+                File file = join(CWD,i);
+                Blob file_blob = new Blob(file) ;
                 delete_file_list.add(file_blob);
             }
         }
@@ -567,13 +569,16 @@ public class Repository {
                 System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             }
+//            System.out.println("add:"+i.get_filename());
             checkout(commit_id,i.get_filename());
         }
         for (Blob i :change_file_list){
             checkout(commit_id,i.get_filename());
+//            System.out.println("change:"+i.get_filename());
         }
         for (Blob i :delete_file_list){
             File delete_file = join(CWD,i.get_filename());
+//            System.out.println("delete:"+delete_file.getName());
             deleteFile(delete_file);
         }
         clear_stage();
@@ -769,7 +774,7 @@ public class Repository {
         Map<String,String> map= merge_file(AllBlob,split_blobs,curr_blobs,merge_blobs);
         //message
         String curr_branch = readContentsAsString(HEAD_FILE);
-        String message = "Merged "+ branch+ "into "+ curr_branch+".";
+        String message = "Merged "+ branch + " into "+ curr_branch+".";
         //创建新commit并保存
         List<String> parents = new ArrayList<>();
         parents.add(currCommit.getID());
