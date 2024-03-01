@@ -660,14 +660,22 @@ public class Repository {
         return delete_blobs;
     }
     private static void conflict_message(String curr_blobID,String merge_blobID){
-        String currBranchContents= readContentsAsString(join(OBJECT_DIR,curr_blobID));
-        String mergeBranchContents= readContentsAsString(join(OBJECT_DIR,merge_blobID));
+        String currBranchContents="";
+        if (!curr_blobID.isEmpty()){
+            currBranchContents=new String(Blob.getblob_byID(curr_blobID).getContext(), StandardCharsets.UTF_8);
+        }
+        String mergeBranchContents="";
+        if (!merge_blobID.isEmpty()){
+            mergeBranchContents =new String(Blob.getblob_byID(merge_blobID).getContext(), StandardCharsets.UTF_8);
+        }
         String conflictContents = "<<<<<<< HEAD\n" + currBranchContents + "=======\n" + mergeBranchContents + ">>>>>>>\n";
         String file_name = Blob.getblob_byID(curr_blobID).get_filename();
         File file = join(CWD,file_name);
         writeContents(file,conflictContents);
     }
+
     private static void deal_conflict(Map<String,String> split_blobs ,Map<String,String>curr_blobs,Map<String,String> merge_blobs){
+        //blobMap(path->id)
         for (String i :split_blobs.keySet()){
             //两分支的文件内容都做了更改，但不一致
             if (merge_blobs.containsKey(i)&&curr_blobs.containsKey(i)){
@@ -676,17 +684,17 @@ public class Repository {
                     conflict_message(curr_blobs.get(i),merge_blobs.get(i));
                 }
             }
-            //其中一分支删除了某文件，另一分支却又对该文件增加了内容
+            //其中一分支删除了某文件，另一分支却又对该文件变化了内容
             if (merge_blobs.containsKey(i)&&!curr_blobs.containsKey(i)){
                 if (!split_blobs.get(i).equals(merge_blobs.get(i))){
                     System.out.println("Encountered a merge conflict.");
-                    conflict_message(curr_blobs.get(i),merge_blobs.get(i));
+                    conflict_message("",merge_blobs.get(i));
                 }
             }
             if (curr_blobs.containsKey(i)&&!merge_blobs.containsKey(i)){
                 if (!split_blobs.get(i).equals(curr_blobs.get(i))){
                     System.out.println("Encountered a merge conflict.");
-                    conflict_message(curr_blobs.get(i),merge_blobs.get(i));
+                    conflict_message(curr_blobs.get(i),"");
                 }
             }
         }
@@ -738,6 +746,7 @@ public class Repository {
         }
     }
     private static void checkIfSplitPintIsCurrBranch(Commit splitPoint, String mergeBranch) {
+        currCommit= getlast_commit();
         if (splitPoint.getID().equals(currCommit.getID())) {
             System.out.println("Current branch fast-forwarded.");
             checkout_branch(mergeBranch);
@@ -759,7 +768,7 @@ public class Repository {
         Commit split_commit = FindSplitNode(currMap,mergeMap);
         //判断该节点的两种情况
         checkIfSplitPintIsGivenBranch(split_commit,mergeCommit);
-        checkIfSplitPintIsCurrBranch(split_commit,currCommit.getID());
+        checkIfSplitPintIsCurrBranch(split_commit,branch);
         //将分裂点处、currCommit处、mergeCommit处跟踪的所有文件blobID都存在AllBlob中
         List<String> AllBlob  =  new ArrayList<>(split_commit.blobid_list());
         AllBlob.addAll(currCommit.blobid_list());
@@ -812,6 +821,12 @@ public class Repository {
             }
         }
         return mergedCommitBlobs;
+    }
+    public static void checkIfInitialized() {
+        if (!GITLET_DIR.exists()) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
     }
 
 

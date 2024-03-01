@@ -15,38 +15,47 @@ public class Main {
             case "init":
                 // TODO: handle the `init` command
                 validArgs(args,1);
+                Repository.checkIfInitialized();
                 Repository.init();
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command
                 validArgs(args,2);
+                Repository.checkIfInitialized();
                 Repository.add(args[1]);
                 break;
             case "commit":
                 validArgs(args,2);
+                Repository.checkIfInitialized();
                 Repository.commit(args[1]);
                 break;
             case "rm":
                 validArgs(args,2);
+                Repository.checkIfInitialized();
                 Repository.rm(args[1]);
                 break;
             case "log":
                 validArgs(args,1);
+                Repository.checkIfInitialized();
                 Repository.log();
                 break;
             case "global-log":
                 validArgs(args,1);
+                Repository.checkIfInitialized();
                 Repository.global_log();
                 break;
             case "find":
                 validArgs(args,2);
+                Repository.checkIfInitialized();
                 Repository.find(args[1]);
                 break;
             case "status":
                 validArgs(args,1);
+                Repository.checkIfInitialized();
                 Repository.status();
                 break;
             case "checkout":
+                Repository.checkIfInitialized();
                 switch (args.length){
                     case 2:
                         /* * checkout [branch name] */
@@ -75,19 +84,27 @@ public class Main {
                 break;
             case "branch":
                 validArgs(args,2);
+                Repository.checkIfInitialized();
                 Repository.branch(args[1]);
                 break;
             case "rm-branch":
                 validArgs(args,2);
+                Repository.checkIfInitialized();
                 Repository.rm_branch(args[1]);
                 break;
             case "reset":
                 validArgs(args,2);
+                Repository.checkIfInitialized();
                 Repository.reset(args[1]);
                 break;
             case "merge":
                 validArgs(args,2);
+                Repository.checkIfInitialized();
                 Repository.merge(args[1]);
+                break;
+            default:
+                System.out.println("No command with that name exists.");
+                System.exit(0);
                 break;
         }
     }
