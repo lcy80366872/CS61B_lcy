@@ -453,8 +453,7 @@ public class Repository {
             System.out.println("No need to checkout the current branch.");
             System.exit(0);
         }
-        //切换Branch，并读取新commit
-        writeContents(HEAD_FILE,branch);
+        //读取新commit
         String id= readContentsAsString(branch_file);
         Commit new_commit= getCommitByID(id);
         //把切换后的分支所跟踪的文件移到当前目录
@@ -463,8 +462,6 @@ public class Repository {
         for (String newID : newBlobID_list){
             Blob newblob = Blob.getblob_byID(newID);
             List<String> name_list =get_blob_name(oriBlobID_list);
-
-
             if (!oriBlobID_list.contains(newID)){
                 // 文件名字一样，blob不一样，代表该文件现在内容相比原先变化了，则overwrite，
                 if (name_list.contains(newblob.get_filename())){
@@ -500,6 +497,8 @@ public class Repository {
         }
         //清空缓存区（stage）
         clear_stage();
+        //切换branch
+        writeContents(HEAD_FILE,branch);
     }
     public static void branch(String branch){
         List <String> branch_list = plainFilenamesIn(heads_DIR);
