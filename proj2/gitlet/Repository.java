@@ -678,27 +678,31 @@ public class Repository {
 
     private static void deal_conflict(Map<String,String> split_blobs ,Map<String,String>curr_blobs,Map<String,String> merge_blobs){
         //blobMap(path->id)
+        boolean conflict_judge =false;
         for (String i :split_blobs.keySet()){
             //两分支的文件内容都做了更改，但不一致
             if (merge_blobs.containsKey(i)&&curr_blobs.containsKey(i)){
-                if (!merge_blobs.get(i).equals(curr_blobs.get(i))){
-                    System.out.println("Encountered a merge conflict.");
+                if (!merge_blobs.get(i).equals(split_blobs.get(i))&&!curr_blobs.get(i).equals(split_blobs.get(i))){
+                    conflict_judge=true;
                     conflict_message(curr_blobs.get(i),merge_blobs.get(i));
                 }
             }
             //其中一分支删除了某文件，另一分支却又对该文件变化了内容
-            if (merge_blobs.containsKey(i)&&!curr_blobs.containsKey(i)){
+            else if (merge_blobs.containsKey(i)&&!curr_blobs.containsKey(i)){
                 if (!split_blobs.get(i).equals(merge_blobs.get(i))){
-                    System.out.println("Encountered a merge conflict.");
+                    conflict_judge=true;
                     conflict_message("",merge_blobs.get(i));
                 }
             }
-            if (curr_blobs.containsKey(i)&&!merge_blobs.containsKey(i)){
+            else if (curr_blobs.containsKey(i)&&!merge_blobs.containsKey(i)){
                 if (!split_blobs.get(i).equals(curr_blobs.get(i))){
                     System.out.println("Encountered a merge conflict.");
                     conflict_message(curr_blobs.get(i),"");
                 }
             }
+        }
+        if (conflict_judge){
+            System.out.println("Encountered a merge conflict.");
         }
     }
     private static Map<String,String> merge_file(List<String> AllFile, Map<String,String> split_blobs,Map<String,String>curr_blobs,Map<String,String> merge_blobs){
