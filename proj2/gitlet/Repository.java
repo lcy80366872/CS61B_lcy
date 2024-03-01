@@ -466,8 +466,8 @@ public class Repository {
 
 
             if (!oriBlobID_list.contains(newID)){
-                // 该文件现在内容相比原先变化了，则overwrite，
-                if (!name_list.contains(newblob.get_filename())){
+                // 文件名字一样，blob不一样，代表该文件现在内容相比原先变化了，则overwrite，
+                if (name_list.contains(newblob.get_filename())){
                     byte[] context = newblob.getContext();
                     writeContents(newblob.get_File(), new String(context, StandardCharsets.UTF_8));
                 }
