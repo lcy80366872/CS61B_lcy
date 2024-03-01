@@ -464,6 +464,7 @@ public class Repository {
             List<String> name_list =get_blob_name(oriBlobID_list);
             if (!oriBlobID_list.contains(newID)){
                 // 文件名字一样，blob不一样，代表该文件现在内容相比原先变化了，则overwrite，
+//                System.out.println("overwrite"+newblob.get_filename());
                 if (name_list.contains(newblob.get_filename())){
                     byte[] context = newblob.getContext();
                     writeContents(newblob.get_File(), new String(context, StandardCharsets.UTF_8));
@@ -476,6 +477,7 @@ public class Repository {
                         System.exit(0);
                     }//原来没有，切换后有了的文件，且不是特殊情况的，直接写入
                     else {
+//                        System.out.println("add"+newblob.get_filename());
                         byte[] context = newblob.getContext();
                         writeContents(newblob.get_File(), new String(context, StandardCharsets.UTF_8));
                     }
@@ -484,16 +486,17 @@ public class Repository {
             }
         }
         //对于切换后分支没有，而切换前分支中有的文件，删掉
-        for (String oriID : oriBlobID_list){
-            if (!newBlobID_list.contains(oriID)) {
-                Blob oriblob = Blob.getblob_byID(oriID);
-                File ori_file = oriblob.get_File();
+        List<String> ori_name_list =get_blob_name(oriBlobID_list);
+        List<String> new_name_list = get_blob_name(newBlobID_list);
+        for (String ori_name: ori_name_list){
+            if(!new_name_list.contains(ori_name)){
+                File delete_file = join(CWD,ori_name);
                 //若其在工作目录中，删掉
-                if (ori_file.exists()) {
-                    deleteFile(oriblob.get_File());
+                if (delete_file.exists()) {
+                    deleteFile(delete_file);
                 }
-            }
                 //若不在，不管
+            }
         }
         //清空缓存区（stage）
         clear_stage();
