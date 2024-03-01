@@ -15,7 +15,6 @@ public class Main {
             case "init":
                 // TODO: handle the `init` command
                 validArgs(args,1);
-                Repository.checkIfInitialized();
                 Repository.init();
                 break;
             case "add":
